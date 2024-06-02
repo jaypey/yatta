@@ -1,3 +1,8 @@
+use std::{
+    error, fs,
+    io::{Error, ErrorKind},
+};
+
 use clap::Parser;
 use directories::ProjectDirs;
 use rusqlite::Connection;
@@ -6,7 +11,7 @@ const YATTA_NAME: &str = env!("CARGO_PKG_NAME");
 
 #[derive(Parser, Debug)]
 #[command(version, about = "Yet Another Time Tracking App", long_about = None)]
-struct Cli{
+struct Cli {
     #[arg(short, long)]
     name: String,
 
@@ -14,28 +19,27 @@ struct Cli{
     count: u8,
 }
 
-fn main() {
-    let cli = Cli::parse();
-
-    for _ in 0..cli.count{
-        println!("Hello {}!", cli.name)
-    }
-}
-
-fn init_database() -> Result<String, String>{
+fn init_database() -> Result<String, Error> {
     if let Some(proj_dirs) = ProjectDirs::from("org", "JEEP", YATTA_NAME) {
         let path = proj_dirs.data_dir();
-        if path.exists(){
-            let conn= Connection::open(path.join("yatta.db")).unwrap();
-            conn.execute("
+        let path_exists = path.try_exists();
+        if path_exists.is_ok_and(|x| x == false) {
+            fs::create_dir_all(path)?;
+            let conn = Connection::open(path.join("yatta.db")).unwrap();
+            conn.execute(
+                "
             CREATE TABLE projects (
                 id	INTEGER NOT NULL UNIQUE,
                 name TEXT,
                 dateCreated	TEXT,
                 completed	INTEGER,
                 PRIMARY KEY(id AUTOINCREMENT)
-            );", ()).unwrap();
-            conn.execute("
+            );",
+                (),
+            )
+            .unwrap();
+            conn.execute(
+                "
                 CREATE TABLE tasks (
                     id	INTEGER NOT NULL UNIQUE,
                     description	TEXT,
@@ -46,12 +50,30 @@ fn init_database() -> Result<String, String>{
                     project_id	INTEGER,
                     FOREIGN KEY(project_id) REFERENCES projects(id),
                     PRIMARY KEY(id AUTOINCREMENT)
-                );", ()).unwrap();
+                );",
+                (),
+            )
+            .unwrap();
 
             return Ok("Success".to_string());
-        }else{
+        } else {
             return Ok("Success".to_string());
         }
     }
-    return Err("Can't open path".to_string());
+    return Err(Error::new(ErrorKind::Other, "Can't create files"));
+}
+
+fn main() {
+    let cli = Cli::parse();
+
+    let init_db_result = init_database();
+
+    match init_db_result {
+        Ok(success) => success,
+        Err(error_msg) => panic!("{}", error_msg),
+    };
+
+    for _ in 0..cli.count {
+        println!("Hello {}!", cli.name)
+    }
 }
