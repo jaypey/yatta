@@ -1,3 +1,5 @@
+mod models;
+
 use std::{
     error, fs,
     io::{Error, ErrorKind},
