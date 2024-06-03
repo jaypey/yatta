@@ -1,15 +1,15 @@
 use chrono::{DateTime, Local};
-use rusqlite::Connection;
+use rusqlite::{params, Connection};
 
 pub struct Project {
     pub id: i64,
-    pub name: str,
+    pub name: String,
     pub date_created: DateTime<Local>,
     pub completed: bool,
 }
 
 impl Project {
-    pub fn new(name: str) -> Self {
+    pub fn new(name: String) -> Self {
         Project {
             id: 0,
             name: name,
@@ -18,14 +18,21 @@ impl Project {
         }
     }
 
-    pub fn create(&self, &conn: Connection) -> Result<String, String> {
-        return conn.execute(format!(
+    pub fn create(&mut self, conn: Connection){
+        match conn.execute(
             "
                         INSERT INTO projects (name, dateCreated, completed)
                         VALUES {}, {}, 0
                         ",
+                        params![
             self.name,
-            self.date_created.to_string()
-        ));
+            self.date_created.to_string()]
+        ){
+            Ok(ajouts) => {
+                self.id = conn.last_insert_rowid();
+                println!("Ajouts: {}", ajouts);
+            },
+            Err(err) => println!("Erreur: {}", err.to_string())
+        }
     }
 }

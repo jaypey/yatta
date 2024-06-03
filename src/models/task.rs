@@ -13,10 +13,10 @@ pub struct Task {
 
 impl Task {
     pub fn new(
-        description: str,
+        description: String,
         date_created: DateTime<Local>,
         expected_time: i32,
-        project_id: i32,
+        project_id: i64,
     ) -> Self {
         Task {
             id: 0,
@@ -29,23 +29,27 @@ impl Task {
         }
     }
 
-    pub fn create(&self, &conn: &Connection) -> Result<String, String> {
-        self.id = conn.last_insert_rowid() + 1; // Add after Ok execute
-        return conn.execute(format!(
+    pub fn create(&mut self, conn: Connection){
+        match conn.execute(
             "
                         INSERT INTO tasks (description, dateCreated, dateEnded, expectedTime, elapsedTime, project_id)
-                        VALUES {}, {}, NULL, {}, {}, {}
+                        VALUES ?1, ?2, NULL, ?3, {?4, ?5
                         ",
-            self.description,
+            params![self.description,
             self.date_created.to_string(),
             self.expected_time,
             self.elapsed_time,
-            self.project_id
-        ));
+            self.project_id]
+        ){
+            Ok(created) => {
+                self.id = conn.last_insert_rowid();
+                println!("Created");
+            },
+            Err(err) => println!("Error")
+        };
     }
 
-    pub fn update(&self, &conn: &Connection) {
-        self.id = conn.last_insert_rowid();
+    pub fn update(&self, conn: Connection) {
         match conn.execute(
             "
                         UPDATE Tasks
@@ -54,7 +58,7 @@ impl Task {
                         ",
             params![
                 self.description,
-                self.date_ended,
+                self.date_ended.to_string(),
                 self.elapsed_time,
                 self.id
             ],
