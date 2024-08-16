@@ -29,7 +29,7 @@ impl Task {
         }
     }
 
-    pub fn create(&mut self, conn: Connection){
+    pub fn create(&mut self, conn: &Connection){
         match conn.execute(
             "
                         INSERT INTO tasks (description, dateCreated, dateEnded, expectedTime, elapsedTime, project_id)
@@ -49,7 +49,7 @@ impl Task {
         };
     }
 
-    pub fn update(&self, conn: Connection) {
+    pub fn update(&self, conn: &Connection) {
         match conn.execute(
             "
                         UPDATE Tasks

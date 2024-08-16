@@ -5,15 +5,41 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "type": "cppvsdbg",
+            "type": "lldb",
             "request": "launch",
-            "name": "Debug",
-            "program": "${workspaceRoot}/target/debug/yatta.exe",
-            "args": ["--name", "Test"],
-            "cwd": "${workspaceRoot}",
-            "sourceLanguages": [
-                "rust"
-            ]
+            "name": "Debug executable 'yatta'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=yatta",
+                    "--package=yatta"
+                ],
+                "filter": {
+                    "name": "yatta",
+                    "kind": "bin"
+                }
+            },
+            "args": ["--name", "test"],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'yatta'",
+            "cargo": {
+                "args": [
+                    "test",
+                    "--no-run",
+                    "--bin=yatta",
+                    "--package=yatta"
+                ],
+                "filter": {
+                    "name": "yatta",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
         }
     ]
 }

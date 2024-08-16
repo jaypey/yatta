@@ -1,27 +1,48 @@
 mod models;
 
+use models::project;
+use models::project::Project;
+use models::task;
+
 use std::{
     error, fs,
-    io::{Error, ErrorKind},
+    io::{Error, ErrorKind}, ops::Deref,
 };
 
-use clap::Parser;
+use clap::{Parser, Subcommand};
 use directories::ProjectDirs;
 use rusqlite::Connection;
 
 const YATTA_NAME: &str = env!("CARGO_PKG_NAME");
 
-#[derive(Parser, Debug)]
+#[derive(Parser)]
 #[command(version, about = "Yet Another Time Tracking App", long_about = None)]
 struct Cli {
-    #[arg(short, long)]
-    name: String,
-
-    #[arg(short, long, default_value_t = 1)]
-    count: u8,
+    #[arg(short, long, action = clap::ArgAction::Count)]
+    debug: u8,
+    
+    #[command(subcommand)]
+    command: Option<Commands>
 }
 
-fn init_database() -> Result<String, Error> {
+#[derive(Subcommand)]
+enum Commands {
+    Create {
+        name: Option<String>
+    },
+    Add {
+        name: Option<String>
+    },
+    Start{
+        name: Option<String>
+    },
+    Stop{
+        name: Option<String>
+    },
+}
+
+
+fn init_database() -> Result<&Connection, Error> {
     if let Some(proj_dirs) = ProjectDirs::from("org", "JEEP", YATTA_NAME) {
         let path = proj_dirs.data_dir();
         let path_exists = path.try_exists();
@@ -57,9 +78,9 @@ fn init_database() -> Result<String, Error> {
             )
             .unwrap();
 
-            return Ok("Success".to_string());
+            return Ok(&conn);
         } else {
-            return Ok("Success".to_string());
+            return Ok(&conn);
         }
     }
     return Err(Error::new(ErrorKind::Other, "Can't create files"));
@@ -69,13 +90,20 @@ fn main() {
     let cli = Cli::parse();
 
     let init_db_result = init_database();
-
     match init_db_result {
-        Ok(success) => success,
+        Ok(conn) => parse_command(&cli.command, conn),
         Err(error_msg) => panic!("{}", error_msg),
     };
 
-    for _ in 0..cli.count {
-        println!("Hello {}!", cli.name)
+
+}
+
+fn parse_command(command: &Option<Commands>,conn: &Connection) {
+    match command {
+        Some(Commands::Add { name }) => ,
+        Some(Commands::Create { name }) => Project::new(name.as_deref().unwrap().to_string()).create(conn),
+        Some(Commands::Start { name }) => todo!(),
+        Some(Commands::Stop { name }) => todo!(),
+        None => todo!(),
     }
 }

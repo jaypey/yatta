@@ -18,7 +18,7 @@ impl Project {
         }
     }
 
-    pub fn create(&mut self, conn: Connection){
+    pub fn create(&mut self, conn: &Connection){
         match conn.execute(
             "
                         INSERT INTO projects (name, dateCreated, completed)
